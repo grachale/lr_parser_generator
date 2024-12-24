@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 # LOCAL IMPORTS
-from src.items.item import Item
+from src.items.lr0_item import LR0Item
 from src.items.lr1_item import LR1Item
 from src.parsers.lr1_parser import LR1Parser
 
@@ -45,7 +45,7 @@ class LALR1Parser(LR1Parser):
 
         # Group states by their LR(0) core
         for idx, I in enumerate(self.C):
-            core = frozenset([Item(item.lhs, item.rhs, item.dot_position) for item in I])
+            core = frozenset([LR0Item(item.lhs, item.rhs, item.dot_position) for item in I])
             state_groups[core].append((idx, I))
 
         new_states = {}

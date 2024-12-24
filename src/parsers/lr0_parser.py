@@ -2,7 +2,7 @@
 from collections import deque
 
 # LOCAL IMPORTS
-from src.items.item import Item
+from src.items.lr0_item import LR0Item
 from src.parsers.lr_parser import LRParser
 
 
@@ -41,7 +41,7 @@ class LR0Parser(LRParser):
         Raises:
             ValueError: If there is a conflict during the construction of the canonical collection.
         """
-        initial_item = Item(self.grammar.augmented_start_symbol, [self.grammar.start_symbol], 0)
+        initial_item = LR0Item(self.grammar.augmented_start_symbol, [self.grammar.start_symbol], 0)
         I0 = self.closure(set([initial_item]))
         self.C.append(I0)
         self.states[frozenset(I0)] = 0
@@ -87,7 +87,7 @@ class LR0Parser(LRParser):
                     if symbol in self.grammar.non_terminals:
                         for prod in self.grammar.productions:
                             if prod[0] == symbol:
-                                new_item = Item(prod[0], prod[1], 0)
+                                new_item = LR0Item(prod[0], prod[1], 0)
                                 if new_item not in closure_set:
                                     new_items.add(new_item)
                                     added = True
@@ -107,7 +107,7 @@ class LR0Parser(LRParser):
         goto_set = set()
         for item in items:
             if item.dot_position < len(item.rhs) and item.rhs[item.dot_position] == symbol:
-                new_item = Item(item.lhs, item.rhs, item.dot_position + 1)
+                new_item = LR0Item(item.lhs, item.rhs, item.dot_position + 1)
                 goto_set.add(new_item)
         return self.closure(goto_set)
 

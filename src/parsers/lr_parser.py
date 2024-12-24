@@ -1,4 +1,3 @@
-# GLOBAL IMPORTS
 from abc import ABC, abstractmethod
 
 
@@ -64,20 +63,20 @@ class LRParser(ABC):
         pass
 
     def parse(self, input_string):
-        """Parses an input string using the constructed ACTION and GOTO tables.
+        """
+        Parses an input string using the constructed ACTION and GOTO tables.
 
-        This method simulates the LR parsing process, displaying each configuration of the parser
-        as it processes the input string. The configurations include the current stack, remaining input,
-        and the action taken.
+        This method simulates the LR parsing process, tracking each step's configuration
+        as the parser processes the input string. The configurations include the current
+        parser stack, the remaining input, and the action taken (shift, reduce, accept, or error).
 
         Args:
             input_string (List[str]): The input string to be parsed, represented as a list of tokens.
 
         Returns:
-            None
-
-        Raises:
-            ValueError: If there is no valid action defined for the current state and token.
+            List[Tuple[List[int], List[str], Union[Tuple[str, Any], None]]]:
+                A list of configurations during the parsing process. Each configuration is a tuple
+                containing the current stack, the remaining input, and the action taken.
         """
         input_string = input_string + ['$']
         stack = [0]
@@ -109,17 +108,10 @@ class LRParser(ABC):
                     return
                 stack.append(goto_state)
             elif action[0] == 'accept':
-                configurations.append((stack[:], input_string[index:], action))
                 print("Input string accepted.")
                 break
             else:
                 print(f"Error: unknown action {action}")
                 return
 
-        # Print the sequence of parser configurations
-        print("\nSequence of parser configurations:")
-        for config in configurations:
-            stack_contents = ' '.join(map(str, config[0]))
-            remaining_input = ' '.join(config[1])
-            action = config[2]
-            print(f"Stack: {stack_contents}\tInput: {remaining_input}\tAction: {action}")
+        return configurations

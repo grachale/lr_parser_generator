@@ -1,7 +1,7 @@
-from src.items.item import Item
+from src.items.lr0_item import LR0Item
 
 
-class LR1Item(Item):
+class LR1Item(LR0Item):
     """Represents an LR(1) item used in parsing algorithms.
 
     An LR(1) item extends an LR(0) item by including a set of lookahead symbols.

@@ -1,4 +1,4 @@
-class Item:
+class LR0Item:
     """Represents an LR(0) item used in parsing algorithms.
 
     An LR(0) item is a construct used in LR parsers (LR(0), SLR(1), LALR(1), LR(1)) to represent
@@ -36,7 +36,7 @@ class Item:
         """Checks if this item is equal to another item.
 
         Args:
-            other (Item): The other item to compare with.
+            other (LR0Item): The other item to compare with.
 
         Returns:
             bool: True if both items have the same `lhs`, `rhs`, and `dot_position`; False otherwise.
