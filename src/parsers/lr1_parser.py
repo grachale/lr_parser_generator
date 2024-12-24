@@ -175,6 +175,7 @@ class LR1Parser(LRParser):
         """
         for I in self.C:
             state_no = self.states[frozenset(I)]
+            # Construct ACTION table
             for item in I:
                 if item.dot_position < len(item.rhs):
                     symbol = item.rhs[item.dot_position]
@@ -190,13 +191,13 @@ class LR1Parser(LRParser):
                     if item.lhs == self.grammar.augmented_start_symbol:
                         self.action[(state_no, '$')] = ('accept',)
                     else:
-                        prod_no = self.grammar.get_production_number((item.lhs, item.rhs))
                         for a in item.lookaheads:
                             action_key = (state_no, a)
                             action_value = ('reduce', item.lhs, item.rhs)
                             if action_key in self.action and self.action[action_key] != action_value:
                                 print(f"Conflict at state {state_no}, symbol {a}")
                             self.action[action_key] = action_value
+            # Construct GOTO table
             for A in self.grammar.non_terminals:
                 next_state = self.transitions.get((state_no, A))
                 if next_state is not None:
