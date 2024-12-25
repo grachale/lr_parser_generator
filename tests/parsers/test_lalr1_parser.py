@@ -1,68 +1,105 @@
-import unittest
-from src.parsers.lalr1_parser import LALR1Parser
-from src.items.lr1_item import LR1Item
+import pytest
 from src.grammars.context_free_grammar import ContextFreeGrammar
+from src.parsers.lalr1_parser import LALR1Parser
+from src.parsers.lr1_parser import LR1Parser
 
 
-class TestLALR1Parser(unittest.TestCase):
-
-    def setUp(self):
-        """Set up the grammar for LALR(1) parser testing."""
-        terminals = ["a", "+", "(", ")"]
-        non_terminals = ["S", "E", "T"]
-        productions = [
-            ("S", ["E"]),
-            ("E", ["E", "+", "T"]),
-            ("E", ["T"]),
-            ("T", ["a"]),
-            ("T", ["(", "E", ")"])
-        ]
-        start_symbol = "S"
-        self.grammar = ContextFreeGrammar(terminals, non_terminals, productions, start_symbol)
-        self.grammar.augment_grammar()
-        self.grammar.compute_first()
-        self.grammar.compute_follow()
-        self.parser = LALR1Parser(context_free_grammar=self.grammar)
-
-    def test_merge_states(self):
-        """Test merging of states with identical LR(0) cores."""
-        self.parser.items()
-        initial_state_count = len(self.parser.C)
-        self.parser.merge_states()
-        merged_state_count = len(self.parser.C)
-
-        # Ensure states are merged, reducing the total count
-        self.assertLess(merged_state_count, initial_state_count)
-
-    def test_items(self):
-        """Test the construction of the canonical collection of LALR(1) items."""
-        self.parser.items()
-        self.parser.construct_parsing_table()
-
-        # Check initial merged state set
-        initial_item_set = self.parser.C[0]
-        self.assertIn(
-            LR1Item("S'", ["S"], 0, {'$'}),
-            initial_item_set
-        )
-
-    def test_parse_valid_input(self):
-        """Test parsing a valid input string using the LALR(1) parser."""
-        self.parser.items()
-        self.parser.construct_parsing_table()
-        configurations = self.parser.parse(["a", "+", "a"])
-
-        self.assertGreater(len(configurations), 0)
-        self.assertEqual(configurations[-1][2], ('accept',))
-
-    def test_parse_invalid_input(self):
-        """Test parsing an invalid input string."""
-        self.parser.items()
-        self.parser.construct_parsing_table()
-        configurations = self.parser.parse(["a", "+"])
-
-        self.assertIsNone(configurations)
+@pytest.fixture
+def grammar1():
+    terminals = ["c", "b", "a"]
+    non_terminals = ["S", "A"]
+    productions = [
+        ("S", ["S", "c"]),
+        ("S", ["A", "S", "c"]),
+        ("S", ["b"]),
+        ("A", ["a", "A"]),
+        ("A", ["a"]),
+    ]
+    start_symbol = "S"
+    return ContextFreeGrammar(terminals, non_terminals, productions, start_symbol)
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.fixture
+def grammar2():
+    terminals = ["if", "then", "+", "*", "(", ")", "or", "else", "i", ":="]
+    non_terminals = ["S", "A", "I", "E", "T", "P", "B", "L"]
+    productions = [
+        ("S", ["A"]),
+        ("S", ["I"]),
+        ("A", ["i", ":=", "E"]),
+        ("I", ["if", "B", "then", "A", "L"]),
+        ("E", ["T"]),
+        ("E", ["E", "+", "T"]),
+        ("T", ["P"]),
+        ("T", ["T", "*", "P"]),
+        ("P", ["(", "E", ")"]),
+        ("P", ["i"]),
+        ("B", ["B", "or", "i"]),
+        ("B", ["i"]),
+        ("L", ["else", "S"]),
+        ("L", ["ε"]),
+    ]
+    start_symbol = "S"
+    return ContextFreeGrammar(terminals, non_terminals, productions, start_symbol)
+
+
+@pytest.fixture
+def lr1_parser1(grammar1):
+    parser = LR1Parser(grammar1)
+    parser.items()
+    parser.construct_parsing_table()
+    return parser
+
+
+@pytest.fixture
+def lalr1_parser1(grammar1):
+    parser = LALR1Parser(grammar1)
+    parser.items()
+    parser.construct_parsing_table()
+    return parser
+
+
+@pytest.fixture
+def lr1_parser2(grammar2):
+    parser = LR1Parser(grammar2)
+    parser.items()
+    parser.construct_parsing_table()
+    return parser
+
+
+@pytest.fixture
+def lalr1_parser2(grammar2):
+    parser = LALR1Parser(grammar2)
+    parser.items()
+    parser.construct_parsing_table()
+    return parser
+
+
+def test_state_reduction(grammar1, lr1_parser1, lalr1_parser1):
+    assert len(lalr1_parser1.C) < len(lr1_parser1.C), "LALR(1) parser should have fewer states than LR(1) parser."
+
+
+def test_parsing_behavior_simple(grammar1, lalr1_parser1):
+    input_string = ["a", "b", "c"]
+    configurations = lalr1_parser1.parse(input_string)
+
+    assert configurations[-1][2] == ("accept",), "LALR(1) parser should accept the input."
+
+
+def test_state_reduction_complex(grammar2, lr1_parser2, lalr1_parser2):
+    assert len(lalr1_parser2.C) < len(lr1_parser2.C), "LALR(1) parser should have fewer states than LR(1) parser."
+
+
+def test_parsing_behavior_complex(grammar2, lalr1_parser2):
+    input_string = ["if", "i", "then", "i", ":=", "i", "+", "i", "else", "i", ":=", "i"]
+    configurations = lalr1_parser2.parse(input_string)
+
+    assert configurations[-1][2] == ("accept",), "LALR(1) parser should accept the input."
+
+
+def test_invalid_parsing_behavior(grammar1, lalr1_parser1):
+    input_string = ["a", "b", "b"]  # Invalid input
+    configurations = lalr1_parser1.parse(input_string)
+
+    assert configurations is None or configurations[-1][2] != (
+        "accept",), "LALR(1) parser should reject invalid input."

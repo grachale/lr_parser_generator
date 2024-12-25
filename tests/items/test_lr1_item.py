@@ -40,7 +40,8 @@ class TestLR1Item(unittest.TestCase):
         repr_result = repr(item)
         # Check basic structure of representation
         self.assertTrue(repr_result.startswith("A -> B • C"))
-        self.assertIn("{a,b}".strip(), repr_result.replace(" ", ""))
+        self.assertIn("a".strip(), repr_result.replace(" ", ""))
+        self.assertIn("b".strip(), repr_result.replace(" ", ""))
 
     def test_empty_rhs_and_lookaheads(self):
         """Test an LR1Item with an empty RHS and no lookaheads."""

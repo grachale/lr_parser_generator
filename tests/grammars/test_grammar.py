@@ -3,6 +3,7 @@ from src.grammars.grammar import Grammar
 
 
 class TestGrammar(unittest.TestCase):
+
     def setUp(self):
         """Set up a sample grammar for testing."""
         self.terminals = ['a', 'b']
