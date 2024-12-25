@@ -142,7 +142,7 @@ class LR0Parser(LRParser):
                         self.action[(state_no, '$')] = ('accept',)
                     # Reduce action
                     else:
-                        for term_symbol in self.grammar.terminals:
+                        for term_symbol in self.grammar.terminals + ['$']:
                             action_key = (state_no, term_symbol)
                             action_value = ('reduce', item.lhs, item.rhs)
                             if action_key in self.action and self.action[action_key] != action_value:

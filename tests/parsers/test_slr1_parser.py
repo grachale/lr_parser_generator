@@ -1,19 +1,21 @@
 import pytest
 from src.grammars.context_free_grammar import ContextFreeGrammar
-from src.parsers.lr1_parser import LR1Parser
-from src.items.lr1_item import LR1Item
+from src.parsers.slr1_parser import SLR1Parser
+from src.items.lr0_item import LR0Item
 
 
 @pytest.fixture
 def grammar1():
-    terminals = ["c", "b", "a"]
-    non_terminals = ["S", "A"]
+    terminals = ["*", "+", "a", "(", ")"]
+    non_terminals = ["S", "E", "P", "T"]
     productions = [
-        ("S", ["S", "c"]),
-        ("S", ["A", "S", "c"]),
-        ("S", ["b"]),
-        ("A", ["a", "A"]),
-        ("A", ["a"]),
+        ("S", ["E"]),
+        ("E", ["E", "*", "P"]),
+        ("E", ["P"]),
+        ("P", ["P", "+", "T"]),
+        ("P", ["T"]),
+        ("T", ["a"]),
+        ("T", ["(", "E", ")"]),
     ]
     start_symbol = "S"
     return ContextFreeGrammar(terminals, non_terminals, productions, start_symbol)
@@ -21,23 +23,14 @@ def grammar1():
 
 @pytest.fixture
 def grammar2():
-    terminals = ["if", "then", "+", "*", "(", ")", "or", "else", "i", ":="]
-    non_terminals = ["S", "A", "I", "E", "T", "P", "B", "L"]
+    terminals = ["+", "a", "(", ")"]
+    non_terminals = ["S", "E", "T"]
     productions = [
-        ("S", ["A"]),
-        ("S", ["I"]),
-        ("A", ["i", ":=", "E"]),
-        ("I", ["if", "B", "then", "A", "L"]),
-        ("E", ["T"]),
+        ("S", ["E"]),
         ("E", ["E", "+", "T"]),
-        ("T", ["P"]),
-        ("T", ["T", "*", "P"]),
-        ("P", ["(", "E", ")"]),
-        ("P", ["i"]),
-        ("B", ["B", "or", "i"]),
-        ("B", ["i"]),
-        ("L", ["else", "S"]),
-        ("L", ["ε"]),
+        ("E", ["T"]),
+        ("T", ["a"]),
+        ("T", ["(", "E", ")"]),
     ]
     start_symbol = "S"
     return ContextFreeGrammar(terminals, non_terminals, productions, start_symbol)
@@ -45,7 +38,7 @@ def grammar2():
 
 @pytest.fixture
 def parser1(grammar1):
-    parser = LR1Parser(grammar1)
+    parser = SLR1Parser(grammar1)
     parser.items()
     parser.construct_parsing_table()
     return parser
@@ -53,7 +46,7 @@ def parser1(grammar1):
 
 @pytest.fixture
 def parser2(grammar2):
-    parser = LR1Parser(grammar2)
+    parser = SLR1Parser(grammar2)
     parser.items()
     parser.construct_parsing_table()
     return parser
@@ -64,7 +57,7 @@ def test_canonical_collection(parser1):
     for i, item_set in enumerate(parser1.C):
         assert isinstance(item_set, set), f"Item set {i} should be a set."
         assert all(
-            isinstance(item, LR1Item) for item in item_set), f"All items in item set {i} should be of type LR1Item."
+            isinstance(item, LR0Item) for item in item_set), f"All items in item set {i} should be of type LR0Item."
 
 
 def test_action_table(parser1):
@@ -84,33 +77,33 @@ def test_goto_table(parser1):
 
 
 def test_parse_valid_input_simple(parser1):
-    input_string = ["a", "a", "c"]
+    input_string = ["a"]
     configurations = parser1.parse(input_string)
     assert configurations is not None, "Parsing should produce configurations."
     assert configurations[-1][2] == ("accept",), "Input should be accepted."
 
 
 def test_parse_valid_input_complex(parser1):
-    input_string = ["a", "a", "c", "b", "c"]
+    input_string = ["a", "+", "a", "*", "a"]
     configurations = parser1.parse(input_string)
     assert configurations is not None, "Parsing should produce configurations."
     assert configurations[-1][2] == ("accept",), "Input should be accepted."
 
 
 def test_parse_invalid_input(parser1):
-    input_string = ["a", "b", "b"]  # Invalid input
+    input_string = ["a", "+", "*"]  # Invalid input
     configurations = parser1.parse(input_string)
     assert configurations is None or configurations[-1][2] != ("accept",), "Invalid input should not be accepted."
 
 
 def test_parse_valid_input_second_grammar(parser2):
-    input_string = ["if", "i", "then", "i", ":=", "i", "+", "i", "else", "i"]
+    input_string = ["a", "+", "(", "a", ")"]
     configurations = parser2.parse(input_string)
     assert configurations is not None, "Parsing should produce configurations."
     assert configurations[-1][2] == ("accept",), "Input should be accepted."
 
 
 def test_parse_invalid_input_second_grammar(parser2):
-    input_string = ["if", "i", "then", "i", "+", "else"]  # Invalid input
+    input_string = ["a", "+", "(", ")"]  # Invalid input
     configurations = parser2.parse(input_string)
     assert configurations is None or configurations[-1][2] != ("accept",), "Invalid input should not be accepted."

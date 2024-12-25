@@ -10,7 +10,23 @@ from src.parsers.lr1_parser import LR1Parser
 from src.parsers.slr1_parser import SLR1Parser
 
 
-def run_ui():
+def run_ui() -> None:
+    """
+    Main function to render and handle the user interface for the LR Parser Generator application using Streamlit.
+
+    Features:
+        - Collects user input for grammar definition, including non-terminals, terminals, productions, and the start symbol.
+        - Validates the grammar input and constructs a context-free grammar object.
+        - Allows the user to select and build one of the following LR parsers: LR(0), SLR(1), LALR(1), or LR(1).
+        - Displays various parser internal structures, including:
+            - Augmented Grammar
+            - FIRST Sets
+            - FOLLOW Sets
+            - Canonical Collection of Items
+            - ACTION Table
+            - GOTO Table
+        - Enables parsing of user-provided input strings and displays the parsing steps.
+    """
     st.set_page_config(page_title="LR Parser Generator", layout="wide", initial_sidebar_state="expanded")
     st.title("LR Parser Generator")
 
@@ -80,28 +96,33 @@ def run_ui():
                 "Parse Input String",
             ])
 
+            # Different Parser Internal Structures
             if feature == "Augmented Grammar":
                 st.write("**Augmented Grammar:**")
                 for idx, prod in enumerate(parser.grammar.productions):
                     st.write(f"{idx}: {prod[0]} -> {' '.join(prod[1])}")
+
             elif feature == "FIRST Sets":
                 if parser.grammar.first is None:
                     parser.grammar.compute_first()
                 st.write("**FIRST Sets:**")
                 for symbol, first_set in parser.grammar.first.items():
                     st.write(f"FIRST({symbol}) = {{ {', '.join(first_set)} }}")
+
             elif feature == "FOLLOW Sets":
                 if parser.grammar.follow is None:
                     parser.grammar.compute_follow()
                 st.write("**FOLLOW Sets:**")
                 for symbol, follow_set in parser.grammar.follow.items():
                     st.write(f"FOLLOW({symbol}) = {{ {', '.join(follow_set)} }}")
+
             elif feature == "Canonical Collection of Items":
                 st.write("**Canonical Collection of Items:**")
                 for idx, I in enumerate(parser.C):
                     st.write(f"**I{idx}:**")
                     for item in I:
                         st.write(f"  {item}")
+
             elif feature == "ACTION Table":
                 st.write("**ACTION Table:**")
                 action_data = {}

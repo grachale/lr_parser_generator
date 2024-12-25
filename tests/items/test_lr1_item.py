@@ -2,6 +2,7 @@ import unittest
 from src.items.lr0_item import LR0Item
 from src.items.lr1_item import LR1Item
 
+
 class TestLR1Item(unittest.TestCase):
 
     def test_initialization(self):
@@ -46,6 +47,7 @@ class TestLR1Item(unittest.TestCase):
         item = LR1Item(lhs="A", rhs=[], dot_position=0, lookaheads=set())
         self.assertEqual(repr(item), "A -> •, {}")
         self.assertEqual(hash(item), hash(("A", (), 0, ())))
+
 
 if __name__ == "__main__":
     unittest.main()

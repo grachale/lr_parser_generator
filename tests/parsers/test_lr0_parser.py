@@ -1,72 +1,80 @@
-import unittest
+import pytest
+from src.grammars.context_free_grammar import ContextFreeGrammar
 from src.items.lr0_item import LR0Item
 from src.parsers.lr0_parser import LR0Parser
-from src.grammars.context_free_grammar import ContextFreeGrammar
 
 
-class TestLR0Parser(unittest.TestCase):
-
-    def setUp(self):
-        """Set up a real context-free grammar for testing."""
-        terminals = ["a", "b"]
-        non_terminals = ["S", "A"]
-        productions = [
-            ("S'", ["S"]),
-            ("S", ["A", "b"]),
-            ("A", ["a"]),
-        ]
-        start_symbol = "S"  # Define the start symbol of the grammar
-        self.grammar = ContextFreeGrammar(terminals, non_terminals, productions, start_symbol)
-        self.grammar.augment_grammar()
-        self.grammar.compute_first()
-        self.parser = LR0Parser(context_free_grammar=self.grammar)
-
-    def test_closure(self):
-        """Test the closure computation for a set of LR(0) items."""
-        items = {LR0Item("S'", ["S"], 0)}
-        closure_result = self.parser.closure(items)
-
-        expected_items = {
-            LR0Item("S'", ["S"], 0),
-            LR0Item("S", ["A", "b"], 0),
-            LR0Item("A", ["a"], 0),
-        }
-        self.assertEqual(closure_result, expected_items)
-
-    def test_goto(self):
-        """Test the GOTO computation for a set of LR(0) items and a symbol."""
-        items = {
-            LR0Item("S'", ["S"], 0),
-            LR0Item("S", ["A", "b"], 0),
-            LR0Item("A", ["a"], 0),
-        }
-        closure_result = self.parser.closure(items)
-        goto_result = self.parser.goto(closure_result, "a")
-
-        expected_items = {
-            LR0Item("A", ["a"], 1),
-        }
-        self.assertEqual(goto_result, expected_items)
-
-    def test_items(self):
-        """Test the construction of the canonical collection of LR(0) items."""
-        self.parser.items()
-
-        # Check the canonical collection (C)
-        self.assertGreater(len(self.parser.C), 0)
-        self.assertIn(
-            LR0Item("S'", ["S"], 0),
-            self.parser.C[0],
-        )
-
-    def test_construct_parsing_table(self):
-        """Test the construction of ACTION and GOTO tables."""
-        self.parser.items()
-        self.parser.construct_parsing_table()
-
-        # Check GOTO table
-        self.assertIn((0, "A"), self.parser.goto_table)
+@pytest.fixture
+def grammar():
+    terminals = ["a", "b", "c"]
+    non_terminals = ["S", "A", "B"]
+    productions = [
+        ("S", ["A", "B", "S"]),
+        ("S", ["c"]),
+        ("A", ["a"]),
+        ("B", ["b"]),
+    ]
+    start_symbol = "S"
+    return ContextFreeGrammar(terminals, non_terminals, productions, start_symbol)
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.fixture
+def parser(grammar):
+    parser = LR0Parser(grammar)
+    parser.items()
+    parser.construct_parsing_table()
+    return parser
+
+
+def test_canonical_collection(parser):
+    # Test that the canonical collection of items is constructed correctly
+    assert len(parser.C) > 0, "Canonical collection should not be empty."
+
+    for i, item_set in enumerate(parser.C):
+        assert isinstance(item_set, set), f"Item set {i} should be a set."
+        assert all(
+            isinstance(item, LR0Item) for item in item_set), f"All items in item set {i} should be of type LR0Item."
+
+
+def test_action_table(parser):
+    # Test that the ACTION table is constructed and contains expected keys
+    assert len(parser.action) > 0, "ACTION table should not be empty."
+    for (state, symbol), action in parser.action.items():
+        assert isinstance(state, int), f"State {state} should be an integer."
+        assert isinstance(symbol, str), f"Symbol {symbol} should be a string."
+        assert action[0] in ["shift", "reduce", "accept"], f"Invalid action {action[0]} in ACTION table."
+
+
+def test_goto_table(parser):
+    # Test that the GOTO table is constructed and contains expected keys
+    assert len(parser.goto_table) > 0, "GOTO table should not be empty."
+    for (state, non_terminal), goto_state in parser.goto_table.items():
+        assert isinstance(state, int), f"State {state} should be an integer."
+        assert isinstance(non_terminal, str), f"Non-terminal {non_terminal} should be a string."
+        assert isinstance(goto_state, int), f"GOTO state {goto_state} should be an integer."
+
+
+def test_parse_valid_input(parser):
+    # Test parsing a valid input string
+    input_string = ["a", "b", "c"]
+    configurations = parser.parse(input_string)
+
+    assert configurations is not None, "Parsing should produce configurations."
+    assert configurations[-1][2] == ("accept",), "Input should be accepted."
+
+
+def test_parse_valid_complex_input(parser):
+    # Test parsing a more complex valid input string
+    input_string = ["a", "b", "a", "b", "c"]
+    configurations = parser.parse(input_string)
+
+    assert configurations is not None, "Parsing should produce configurations."
+    assert configurations[-1][2] == ("accept",), "Input should be accepted."
+
+
+def test_parse_invalid_input(parser):
+    # Test parsing an invalid input string
+    input_string = ["a", "a", "c"]  # Invalid input
+    configurations = parser.parse(input_string)
+
+    assert configurations is None or configurations[-1][2] != ("accept",), "Invalid input should not be accepted."
