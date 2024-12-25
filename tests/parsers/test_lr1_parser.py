@@ -84,14 +84,14 @@ def test_goto_table(parser1):
 
 
 def test_parse_valid_input_simple(parser1):
-    input_string = ["a", "a", "c"]
+    input_string = ["a", "b", "c"]
     configurations = parser1.parse(input_string)
     assert configurations is not None, "Parsing should produce configurations."
     assert configurations[-1][2] == ("accept",), "Input should be accepted."
 
 
 def test_parse_valid_input_complex(parser1):
-    input_string = ["a", "a", "c", "b", "c"]
+    input_string = ["a", "a", "b", "c", "c"]
     configurations = parser1.parse(input_string)
     assert configurations is not None, "Parsing should produce configurations."
     assert configurations[-1][2] == ("accept",), "Input should be accepted."
@@ -104,7 +104,7 @@ def test_parse_invalid_input(parser1):
 
 
 def test_parse_valid_input_second_grammar(parser2):
-    input_string = ["if", "i", "then", "i", ":=", "i", "+", "i", "else", "i"]
+    input_string = ["if", "i", "then", "i", ":=", "i", "+", "i", "else", "i", ":=", "i"]
     configurations = parser2.parse(input_string)
     assert configurations is not None, "Parsing should produce configurations."
     assert configurations[-1][2] == ("accept",), "Input should be accepted."
