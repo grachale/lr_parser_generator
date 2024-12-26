@@ -69,7 +69,6 @@ class ContextFreeGrammar(Grammar):
         """
         self.follow = {symbol: set() for symbol in self.non_terminals}
 
-        # Add end-of-input symbol '$' to FOLLOW(start symbol)
         self.follow[self.start_symbol].add('$')
 
         changed = True
